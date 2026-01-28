@@ -7,15 +7,20 @@ const supabase = supabaseClient();
 
 interface AddInstrumentFormProps {
   mutate: () => void;
+  onAdd?: (
+    instrument: { id: number; name: string } | null,
+    error?: any,
+  ) => void;
 }
 
-export default function AddInstrumentForm({ mutate }: AddInstrumentFormProps) {
+export default function AddInstrumentForm({
+  mutate,
+  onAdd,
+}: AddInstrumentFormProps) {
   const [newInstrument, setNewInstrument] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleAdd = async () => {
-    if (!newInstrument.trim()) return;
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     const { data, error } = await supabase
       .from("instruments")
@@ -24,30 +29,33 @@ export default function AddInstrumentForm({ mutate }: AddInstrumentFormProps) {
 
     if (error) {
       console.error("Error adding instrument:", error);
-    } else {
-      setNewInstrument("");
-      mutate(); // revalidate SWR
+      onAdd?.(null, error);
+      return;
     }
 
-    setLoading(false);
+    if (data && data[0]) {
+      mutate(); // refresh SWR
+      onAdd?.(data[0]);
+      setNewInstrument("");
+    }
   };
 
   return (
-    <div className="mb-4 flex space-x-2">
+    <form onSubmit={handleSubmit} className="flex mb-4 gap-2">
       <input
         type="text"
-        placeholder="Add an instrument"
         value={newInstrument}
         onChange={(e) => setNewInstrument(e.target.value)}
+        placeholder="Add a new instrument"
         className="flex-1 p-2 rounded bg-slate-700 text-white"
+        required
       />
       <button
-        onClick={handleAdd}
-        disabled={loading}
-        className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+        type="submit"
+        className="px-4 py-2 bg-green-600 rounded hover:bg-green-500"
       >
-        {loading ? "Adding..." : "Add"}
+        Add
       </button>
-    </div>
+    </form>
   );
 }

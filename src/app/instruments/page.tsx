@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { supabaseClient } from "@/lib/supabase/client";
 import AddInstrumentForm from "@/components/AddInstrumentForm";
 import useSWR from "swr";
-import { useState } from "react";
 
 const supabase = supabaseClient();
 
@@ -20,9 +20,29 @@ export default function InstrumentsPage() {
   const { data: instruments, error, mutate } = useSWR("instruments", fetcher);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const showMessage = (text: string, type: "success" | "error" = "success") => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage(null), 3000);
+  };
 
   if (error) return <p className="text-red-500">{error.message}</p>;
   if (!instruments) return <p>Loading...</p>;
+
+  const handleAdd = (
+    instrument: { id: number; name: string } | null,
+    error?: any,
+  ) => {
+    if (error) {
+      showMessage(`Failed to add instrument`, "error");
+    } else if (instrument) {
+      showMessage(`"${instrument.name}" added successfully!`);
+    }
+  };
 
   const handleEdit = async (id: number) => {
     const { error } = await supabase
@@ -32,19 +52,24 @@ export default function InstrumentsPage() {
 
     if (error) {
       console.error("Error updating instrument:", error);
+      showMessage(`Failed to update "${editName}"`, "error");
     } else {
       setEditingId(null);
-      mutate(); // revalidate SWR
+      mutate();
+      showMessage(`"${editName}" updated successfully!`);
     }
   };
 
   const handleDelete = async (id: number) => {
+    const instrument = instruments.find((i) => i.id === id);
     const { error } = await supabase.from("instruments").delete().eq("id", id);
 
     if (error) {
       console.error("Error deleting instrument:", error);
+      showMessage(`Failed to delete "${instrument?.name}"`, "error");
     } else {
-      mutate(); // Refresh the list after deletion
+      mutate();
+      showMessage(`"${instrument?.name}" deleted successfully!`);
     }
   };
 
@@ -52,22 +77,36 @@ export default function InstrumentsPage() {
     <main className="min-h-screen bg-slate-900 text-slate-100 p-8">
       <div className="max-w-xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">🎻 Instruments</h1>
-        <AddInstrumentForm mutate={mutate} />
+
+        {message && (
+          <div
+            className={`mb-4 p-3 rounded shadow ${
+              message.type === "success"
+                ? "bg-green-600 text-white"
+                : "bg-red-600 text-white"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+
+        <AddInstrumentForm mutate={mutate} onAdd={handleAdd} />
+
         <ul className="space-y-3">
           {instruments.map((instrument) => (
             <li
               key={instrument.id}
-              className="bg-slate-800 rounded-lg p-4 shadow flex items-center justify-between"
+              className="bg-slate-800 rounded-lg p-4 shadow flex justify-between items-center"
             >
               {editingId === instrument.id ? (
-                <div className="flex flex-1 items-center gap-2">
+                <>
                   <input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 p-2 rounded bg-slate-700 text-white"
+                    className="flex-1 p-2 rounded bg-slate-700 text-white mr-2"
                   />
                   <button
-                    className="px-3 py-1 bg-green-600 rounded hover:bg-green-500"
+                    className="px-3 py-1 bg-green-600 rounded hover:bg-green-500 mr-2"
                     onClick={() => handleEdit(instrument.id)}
                   >
                     Save
@@ -78,27 +117,25 @@ export default function InstrumentsPage() {
                   >
                     Cancel
                   </button>
-                </div>
+                </>
               ) : (
-                <div className="flex flex-1 items-center justify-between">
+                <div className="flex gap-2">
                   <span className="flex-1">{instrument.name}</span>
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500"
-                      onClick={() => {
-                        setEditingId(instrument.id);
-                        setEditName(instrument.name);
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
-                      onClick={() => handleDelete(instrument.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <button
+                    className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500"
+                    onClick={() => {
+                      setEditingId(instrument.id);
+                      setEditName(instrument.name);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
+                    onClick={() => handleDelete(instrument.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               )}
             </li>
