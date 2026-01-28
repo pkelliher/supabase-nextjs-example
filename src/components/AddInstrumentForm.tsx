@@ -5,56 +5,48 @@ import { supabaseClient } from "@/lib/supabase/client";
 
 const supabase = supabaseClient();
 
-interface AddInstrumentFormProps {
-  mutate: () => void;
-  onAdd?: (
-    instrument: { id: number; name: string } | null,
-    error?: any,
-  ) => void;
-}
-
 export default function AddInstrumentForm({
   mutate,
   onAdd,
-}: AddInstrumentFormProps) {
-  const [newInstrument, setNewInstrument] = useState("");
+}: {
+  mutate: () => void;
+  onAdd: (instrument: { id: number; name: string } | null, error?: any) => void;
+}) {
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
 
     const { data, error } = await supabase
       .from("instruments")
-      .insert([{ name: newInstrument }])
-      .select();
+      .insert({ name })
+      .select()
+      .single();
 
-    if (error) {
-      console.error("Error adding instrument:", error);
-      onAdd?.(null, error);
-      return;
-    }
-
-    if (data && data[0]) {
-      mutate(); // refresh SWR
-      onAdd?.(data[0]);
-      setNewInstrument("");
-    }
+    setLoading(false);
+    setName("");
+    mutate();
+    onAdd(data, error);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex mb-4 gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
       <input
-        type="text"
-        value={newInstrument}
-        onChange={(e) => setNewInstrument(e.target.value)}
-        placeholder="Add a new instrument"
         className="flex-1 p-2 rounded bg-slate-700 text-white"
-        required
+        placeholder="New instrument"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        disabled={loading}
       />
       <button
         type="submit"
         className="px-4 py-2 bg-green-600 rounded hover:bg-green-500"
+        disabled={loading}
       >
-        Add
+        {loading ? "Adding..." : "Add"}
       </button>
     </form>
   );

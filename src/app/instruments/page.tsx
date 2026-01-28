@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabaseClient } from "@/lib/supabase/client";
 import AddInstrumentForm from "@/components/AddInstrumentForm";
 import useSWR from "swr";
@@ -24,11 +24,28 @@ export default function InstrumentsPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const showMessage = (text: string, type: "success" | "error" = "success") => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 3000);
   };
+
+  // Real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel("instruments")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "instruments" },
+        () => mutate(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [mutate]);
 
   if (error) return <p className="text-red-500">{error.message}</p>;
   if (!instruments) return <p>Loading...</p>;
@@ -37,11 +54,9 @@ export default function InstrumentsPage() {
     instrument: { id: number; name: string } | null,
     error?: any,
   ) => {
-    if (error) {
-      showMessage(`Failed to add instrument`, "error");
-    } else if (instrument) {
+    if (error) showMessage("Failed to add instrument", "error");
+    else if (instrument)
       showMessage(`"${instrument.name}" added successfully!`);
-    }
   };
 
   const handleEdit = async (id: number) => {
@@ -49,11 +64,8 @@ export default function InstrumentsPage() {
       .from("instruments")
       .update({ name: editName })
       .eq("id", id);
-
-    if (error) {
-      console.error("Error updating instrument:", error);
-      showMessage(`Failed to update "${editName}"`, "error");
-    } else {
+    if (error) showMessage(`Failed to update "${editName}"`, "error");
+    else {
       setEditingId(null);
       mutate();
       showMessage(`"${editName}" updated successfully!`);
@@ -62,15 +74,19 @@ export default function InstrumentsPage() {
 
   const handleDelete = async (id: number) => {
     const instrument = instruments.find((i) => i.id === id);
-    const { error } = await supabase.from("instruments").delete().eq("id", id);
+    setDeletingId(id);
 
-    if (error) {
-      console.error("Error deleting instrument:", error);
-      showMessage(`Failed to delete "${instrument?.name}"`, "error");
-    } else {
+    setTimeout(async () => {
+      const { error } = await supabase
+        .from("instruments")
+        .delete()
+        .eq("id", id);
+      if (error) showMessage(`Failed to delete "${instrument?.name}"`, "error");
+      else showMessage(`"${instrument?.name}" deleted successfully!`);
+
+      setDeletingId(null);
       mutate();
-      showMessage(`"${instrument?.name}" deleted successfully!`);
-    }
+    }, 400); // match CSS animation
   };
 
   return (
@@ -81,10 +97,8 @@ export default function InstrumentsPage() {
         {message && (
           <div
             className={`mb-4 p-3 rounded shadow ${
-              message.type === "success"
-                ? "bg-green-600 text-white"
-                : "bg-red-600 text-white"
-            }`}
+              message.type === "success" ? "bg-green-600" : "bg-red-600"
+            } text-white`}
           >
             {message.text}
           </div>
@@ -96,7 +110,9 @@ export default function InstrumentsPage() {
           {instruments.map((instrument) => (
             <li
               key={instrument.id}
-              className="bg-slate-800 rounded-lg p-4 shadow flex justify-between items-center"
+              className={`bg-slate-800 rounded-lg p-4 shadow flex justify-between items-center ${
+                deletingId === instrument.id ? "fade-out" : ""
+              }`}
             >
               {editingId === instrument.id ? (
                 <>
