@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabaseClient } from "@/lib/supabase/client";
-import AddInstrumentForm from "@/components/AddInstrumentForm";
+import { supabaseClient } from "../lib/supabase/client";
+import AddInstrumentForm from "../components/AddInstrumentForm";
 import useSWR from "swr";
 
 const supabase = supabaseClient();
