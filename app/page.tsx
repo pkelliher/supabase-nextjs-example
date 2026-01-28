@@ -13,6 +13,7 @@ const fetcher = async () => {
     .from("instruments")
     .select()
     .order("created_at", { ascending: false });
+
   if (error) throw error;
   return data;
 };
@@ -55,9 +56,11 @@ export default function InstrumentsPage() {
     instrument: { id: number; name: string } | null,
     error?: PostgrestError | null,
   ) => {
-    if (error) showMessage("Failed to add instrument", "error");
-    else if (instrument)
+    if (error) {
+      showMessage("Failed to add instrument", "error");
+    } else if (instrument) {
       showMessage(`"${instrument.name}" added successfully!`);
+    }
   };
 
   const handleEdit = async (id: number) => {
@@ -65,8 +68,10 @@ export default function InstrumentsPage() {
       .from("instruments")
       .update({ name: editName })
       .eq("id", id);
-    if (error) showMessage(`Failed to update "${editName}"`, "error");
-    else {
+
+    if (error) {
+      showMessage(`Failed to update "${editName}"`, "error");
+    } else {
       setEditingId(null);
       mutate();
       showMessage(`"${editName}" updated successfully!`);
@@ -82,8 +87,12 @@ export default function InstrumentsPage() {
         .from("instruments")
         .delete()
         .eq("id", id);
-      if (error) showMessage(`Failed to delete "${instrument?.name}"`, "error");
-      else showMessage(`"${instrument?.name}" deleted successfully!`);
+
+      if (error) {
+        showMessage(`Failed to delete "${instrument?.name}"`, "error");
+      } else {
+        showMessage(`"${instrument?.name}" deleted successfully!`);
+      }
 
       setDeletingId(null);
       mutate();
@@ -107,57 +116,63 @@ export default function InstrumentsPage() {
 
         <AddInstrumentForm mutate={mutate} onAdd={handleAdd} />
 
-        <ul className="space-y-3">
-          {instruments.map((instrument) => (
-            <li
-              key={instrument.id}
-              className={`bg-slate-800 rounded-lg p-4 shadow flex justify-between items-center ${
-                deletingId === instrument.id ? "fade-out" : ""
-              }`}
-            >
-              {editingId === instrument.id ? (
-                <>
-                  <input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 p-2 rounded bg-slate-700 text-white mr-2"
-                  />
-                  <button
-                    className="px-3 py-1 bg-green-600 rounded hover:bg-green-500 mr-2"
-                    onClick={() => handleEdit(instrument.id)}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
-                    onClick={() => setEditingId(null)}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <div className="flex gap-2">
-                  <span className="flex-1">{instrument.name}</span>
-                  <button
-                    className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500"
-                    onClick={() => {
-                      setEditingId(instrument.id);
-                      setEditName(instrument.name);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
-                    onClick={() => handleDelete(instrument.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        {instruments.length === 0 ? (
+          <p className="text-slate-400 text-center mt-6">
+            No instruments yet — add your first one above.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {instruments.map((instrument) => (
+              <li
+                key={instrument.id}
+                className={`bg-slate-800 rounded-lg p-4 shadow flex justify-between items-center ${
+                  deletingId === instrument.id ? "fade-out" : ""
+                }`}
+              >
+                {editingId === instrument.id ? (
+                  <>
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="flex-1 p-2 rounded bg-slate-700 text-white mr-2"
+                    />
+                    <button
+                      className="px-3 py-1 bg-green-600 rounded hover:bg-green-500 mr-2"
+                      onClick={() => handleEdit(instrument.id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
+                      onClick={() => setEditingId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex gap-2">
+                    <span className="flex-1">{instrument.name}</span>
+                    <button
+                      className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500"
+                      onClick={() => {
+                        setEditingId(instrument.id);
+                        setEditName(instrument.name);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
+                      onClick={() => handleDelete(instrument.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </main>
   );
