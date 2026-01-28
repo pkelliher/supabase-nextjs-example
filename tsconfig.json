@@ -13,9 +13,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "baseUrl": ".", // <-- ADD THIS LINE
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["*"] // <-- now this works correctly
+      "@/*": ["*"]
     },
     "plugins": [
       {

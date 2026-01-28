@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabaseClient } from "../lib/supabase/client";
+import type { PostgrestError } from "@supabase/supabase-js";
 import AddInstrumentForm from "../components/AddInstrumentForm";
 import useSWR from "swr";
 
@@ -52,7 +53,7 @@ export default function InstrumentsPage() {
 
   const handleAdd = (
     instrument: { id: number; name: string } | null,
-    error?: any,
+    error?: PostgrestError | null,
   ) => {
     if (error) showMessage("Failed to add instrument", "error");
     else if (instrument)

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabaseClient } from "../lib/supabase/client";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 const supabase = supabaseClient();
 
@@ -10,7 +11,10 @@ export default function AddInstrumentForm({
   onAdd,
 }: {
   mutate: () => void;
-  onAdd: (instrument: { id: number; name: string } | null, error?: any) => void;
+  onAdd: (
+    instrument: { id: number; name: string } | null,
+    error?: PostgrestError | null,
+  ) => void;
 }) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
