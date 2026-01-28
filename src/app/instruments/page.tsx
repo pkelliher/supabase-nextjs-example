@@ -38,6 +38,16 @@ export default function InstrumentsPage() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    const { error } = await supabase.from("instruments").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting instrument:", error);
+    } else {
+      mutate(); // Refresh the list after deletion
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100 p-8">
       <div className="max-w-xl mx-auto">
@@ -47,22 +57,17 @@ export default function InstrumentsPage() {
           {instruments.map((instrument) => (
             <li
               key={instrument.id}
-              className="bg-slate-800 rounded-lg p-4 shadow flex justify-between items-center"
+              className="bg-slate-800 rounded-lg p-4 shadow flex items-center justify-between"
             >
               {editingId === instrument.id ? (
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="flex-1 p-2 rounded bg-slate-700 text-white mr-2"
-                />
-              ) : (
-                <span>{instrument.name}</span>
-              )}
-
-              {editingId === instrument.id ? (
-                <>
+                <div className="flex flex-1 items-center gap-2">
+                  <input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1 p-2 rounded bg-slate-700 text-white"
+                  />
                   <button
-                    className="px-3 py-1 bg-green-600 rounded hover:bg-green-500 mr-2"
+                    className="px-3 py-1 bg-green-600 rounded hover:bg-green-500"
                     onClick={() => handleEdit(instrument.id)}
                   >
                     Save
@@ -73,17 +78,28 @@ export default function InstrumentsPage() {
                   >
                     Cancel
                   </button>
-                </>
+                </div>
               ) : (
-                <button
-                  className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500"
-                  onClick={() => {
-                    setEditingId(instrument.id);
-                    setEditName(instrument.name);
-                  }}
-                >
-                  Edit
-                </button>
+                <div className="flex flex-1 items-center justify-between">
+                  <span className="flex-1">{instrument.name}</span>
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-500"
+                      onClick={() => {
+                        setEditingId(instrument.id);
+                        setEditName(instrument.name);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="px-3 py-1 bg-red-600 rounded hover:bg-red-500"
+                      onClick={() => handleDelete(instrument.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               )}
             </li>
           ))}
