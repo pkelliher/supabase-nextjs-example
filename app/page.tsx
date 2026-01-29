@@ -33,7 +33,6 @@ export default function InstrumentsPage() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  // Real-time subscription
   useEffect(() => {
     const channel = supabase
       .channel("instruments")
@@ -96,13 +95,13 @@ export default function InstrumentsPage() {
 
       setDeletingId(null);
       mutate();
-    }, 400); // match CSS animation
+    }, 400);
   };
 
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100 p-8">
       <div className="max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">🎻 Instruments</h1>
+        <h1 className="text-3xl font-bold mb-6">Instruments CRUD example</h1>
 
         {message && (
           <div
