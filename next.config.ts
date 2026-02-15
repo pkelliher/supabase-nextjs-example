@@ -1,8 +1,11 @@
-import type { NextConfig } from "next";
+import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
+  reactStrictMode: true,
+  experimental: {},
+  typescript: {
+    ignoreBuildErrors: false,
+  },
 };
 
 export default nextConfig;
