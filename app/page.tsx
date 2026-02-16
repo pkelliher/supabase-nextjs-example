@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabaseClient } from "../lib/supabase/client";
+import { useRouter } from "next/navigation";
 import type { PostgrestError } from "@supabase/supabase-js";
 import AddInstrumentForm from "../components/AddInstrumentForm";
 import useSWR from "swr";
@@ -19,6 +20,7 @@ const fetcher = async () => {
 };
 
 export default function InstrumentsPage() {
+  const router = useRouter();
   const { data: instruments, error, mutate } = useSWR("instruments", fetcher);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
@@ -33,6 +35,20 @@ export default function InstrumentsPage() {
     setTimeout(() => setMessage(null), 3000);
   };
 
+  // Auth check
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("instruments")
@@ -98,10 +114,23 @@ export default function InstrumentsPage() {
     }, 400);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100 p-8">
       <div className="max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Instruments CRUD example</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Instruments CRUD example</h1>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 rounded hover:bg-red-500"
+          >
+            Logout
+          </button>
+        </div>
 
         {message && (
           <div
