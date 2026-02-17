@@ -35,7 +35,6 @@ export default function InstrumentsPage() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  // Auth check
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -48,7 +47,6 @@ export default function InstrumentsPage() {
     checkAuth();
   }, [router]);
 
-  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("instruments")
